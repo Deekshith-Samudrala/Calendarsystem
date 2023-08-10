@@ -52,7 +52,7 @@ app.post("/slots", async(req,res)=>{
         tempslot.setHours(startHours,0,0,0);// temp slot of the date to start our loop from and check for overlap on bookedevent
         tempslot.setHours(tempslot.getHours() + hoursToAdd);// since time is getting converted to UTC have to add 5hrs 30 min
         tempslot.setMinutes(tempslot.getMinutes() + minutesToAdd);// since time is getting converted to UTC have to add 5hrs 30 min
-        while(tempslot.getHours < endhours){
+        while(tempslot.getHours() < (endHours + hoursToAdd)){
             
             const slotloopstart = new Date(tempslot); // loopslotstart for the 
             const slotloopend = new Date(tempslot);
@@ -61,9 +61,11 @@ app.post("/slots", async(req,res)=>{
 
             let isoverlapped = false;
 
+            console.log(slotloopstart);
             for(const event in bookedevents){
-                if(event.startDateTime >= slotloopstart && event.endDateTime <= slotloopend){
+                if((event.startDateTime >= slotloopstart && event.startDateTime <= slotloopend) || (event.endDateTime >= slotloopstart && event.endDateTime <= slotloopend)){
                     isoverlapped = true;
+                    console.log("loop broken");
                     break;
                 }
             }
@@ -71,11 +73,21 @@ app.post("/slots", async(req,res)=>{
             if(!isoverlapped){
                 freeslots.push(slotloopstart);
             }
+
+            tempslot.setMinutes(tempslot.getMinutes() + slotduration);
+            console.log("incremented",tempslot.getHours());
         }
+
+        if(tempslot.getMinutes() < minutesToAdd){
+            freeslots.push(tempslot);
+        }
+
+        res.send({success : true,info : freeslots});
 
     }
     catch(error){
-
+        console.log("*********error*********",error);
+        res.send({success : false});
     }
 })
 

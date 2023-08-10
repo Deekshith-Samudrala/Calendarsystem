@@ -10,6 +10,9 @@ const Bookevent = () => {
    let [selecteddate,setSelecteddate] = useState("");
    let [dateerr,setDateerr] = useState(true);
    let [formsubmit,setFormsubmit] = useState(false);
+   let [formsubmiterr,setFormsubmiterr] = useState("Please submit the form to check available slots")
+   let [availableslotsarr,setAvailableslotsarr] = useState([]);
+   let [dispdate,setDispdate] = useState();
 
    useEffect(()=>{
       
@@ -45,9 +48,22 @@ const Bookevent = () => {
       onSubmit : async (formdata)=>{
          setFormsubmit(true);
          selecteddate.setHours(0,0,0,0);
-         let obj = {formdata : formdata,date : selecteddate.toLocaleDateString('en-us')}
-         console.log(obj);
+         let obj = {formdata : formdata,date : selecteddate.toLocaleDateString('en-us')};
          let result = await slotservice.availableslots(obj);
+         if(result.success){
+            if(result.info.length == 0){
+               setFormsubmit(false);
+               setFormsubmiterr("There are no available slots on this date !");
+            }
+            else{
+            setAvailableslotsarr(result.info);
+            setDispdate(result.info[0])
+            console.log(result.info);
+         }
+         }
+         else{
+            console.log(result.err);
+         }
       },
       validationSchema : formschema
    })
@@ -60,7 +76,7 @@ const Bookevent = () => {
     return (
         <>
             <div className='container-fluid'>
-            <h2 className='text-center my-3'><u><i><b>Slot Booking</b></i></u></h2>
+            <h2 className='text-center my-3'><u><b>Slot Booking</b></u></h2>
                 <div className='row'>
                   <div className='col-md-6 border-right'>
                      <h4 className='text-center my-3'>Check available slots</h4>
@@ -129,10 +145,27 @@ const Bookevent = () => {
                         {
                            formsubmit ? "" : (
                               <div className='col-md-8 offset-md-2'>
-                                 <div className='alert alert-danger text-center'>Please submit the form to check available slots</div>
+                                 <div className='alert alert-danger text-center'>{formsubmiterr}</div>
                               </div>
                            ) 
                         }
+                        <div className='col-md-12 ml-4'>
+                           {
+                              availableslotsarr.length ? 
+                              (
+                                 <div className='text-center mr-5 mb-2'><i><u>Date Selected : {dispdate.toLocaleString().slice(0,10)}</u></i></div>
+                              ) : ""
+                           }
+                           {
+                              availableslotsarr.map((date,index)=>{
+                                 return (
+                                    <React.Fragment key={index}>
+                                       <button className='btn btn-danger m-3'>{date.slice(11,16)}</button>
+                                    </React.Fragment>
+                                 )
+                              })
+                           }
+                        </div>
                      </div>
                   </div>
                 </div>

@@ -1,11 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useFormik } from 'formik';
 import * as yup from "yup";
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import slotservice from '../../Services/slotservice';
+import { useNavigate } from 'react-router-dom';
 
 const Bookevent = () => {
+
+   let navigate = useNavigate();
 
    let [selecteddate,setSelecteddate] = useState("");
    let [dateerr,setDateerr] = useState(true);
@@ -13,16 +16,7 @@ const Bookevent = () => {
    let [formsubmiterr,setFormsubmiterr] = useState("Please submit the form to check available slots")
    let [availableslotsarr,setAvailableslotsarr] = useState([]);
    let [dispdate,setDispdate] = useState();
-
-   useEffect(()=>{
-      
-      const getstatic = async ()=>{
-         let result = await slotservice.getstaticdetails();
-      }
-      
-      getstatic();
-
-   },[])
+   let [userdata,setUserdata] = useState();
 
    const disabledbeforedate = new Date(2023,7,3);
    const disabledafterdate = new Date(2023,9,3);
@@ -34,24 +28,24 @@ const Bookevent = () => {
    let formschema = yup.object({
       name : yup.string().required("Enter your name"),
       contact : yup.number().required("Enter contact Number").typeError("Enter only Numbers").min(7000000000,"Enter valid Number").max(9999999999,"Enter valid Number"),
-      duration : yup.string().required("Select the duration"),
       timezone : yup.string().required("Select a time zone")
    })
 
-   let {handleChange,touched,handleSubmit,errors,values} = useFormik({
+   let {handleChange,touched,handleSubmit,errors} = useFormik({
       initialValues : {
          name : "",
          contact : "",
-         duration : "",
          timezone : "",
       },
       onSubmit : async (formdata)=>{
          setFormsubmit(true);
-         selecteddate.setHours(0,0,0,0);
+         setUserdata(formdata);
+         selecteddate.setHours(0,0,0,0);// to make hours minutes seconds and milliseconds to zero.
          let obj = {formdata : formdata,date : selecteddate.toLocaleDateString('en-us')};
+         console.log(obj);
          let result = await slotservice.availableslots(obj);
          if(result.success){
-            if(result.info.length == 0){
+            if(result.info.length === 0){
                setFormsubmit(false);
                setFormsubmiterr("There are no available slots on this date !");
             }
@@ -62,7 +56,9 @@ const Bookevent = () => {
          }
          }
          else{
-            console.log(result.err);
+            setFormsubmit(false);
+            setFormsubmiterr("An error has occurred ! please try again");
+            console.log(result.error);
          }
       },
       validationSchema : formschema
@@ -71,6 +67,23 @@ const Bookevent = () => {
       let datechange = (date)=>{
          setDateerr(false);
          setSelecteddate(date);
+      }
+
+      let bookslot = async (e)=>{
+         let obj = {
+            data : userdata,
+            date : e.target.value
+         }
+         
+         let result = await slotservice.bookaslot(obj);
+         if(result.success){
+            navigate("/");
+         }
+         else{
+            setFormsubmit(false);
+            setFormsubmiterr("An error has occurred ! please try again");
+            console.log(result.error);
+         }
       }
    
     return (
@@ -100,19 +113,6 @@ const Bookevent = () => {
                                           errors.contact && touched.contact ? errors.contact : ""
                                        }
                                  </small>
-                              </div>
-                              <div className='form-group'>
-                                 <label>Duration</label> 
-                                 <select className={'form-control' + (errors.duration && touched.duration ? " is-invalid" : "")} name="duration" onChange={handleChange}>
-                                    <option value="">Select Duration</option>
-                                    <option value="30">30 Min</option>
-                                    <option value="60">60 Min</option>
-                                 </select>
-                                 <small className='text-danger'>
-                                    {
-                                       errors.duration && touched.duration ? errors.duration : ""
-                                    }
-                              </small>
                               </div>
                               <div className='form-group'>
                                  <label>Time-Zone</label>
@@ -160,7 +160,7 @@ const Bookevent = () => {
                               availableslotsarr.map((date,index)=>{
                                  return (
                                     <React.Fragment key={index}>
-                                       <button className='btn btn-danger m-3'>{date.slice(11,16)}</button>
+                                       <button className='btn btn-danger btn-lg m-3' onClick={(e)=>bookslot(e)} value={date}>{date.slice(11,16)}</button>
                                     </React.Fragment>
                                  )
                               })

@@ -8,9 +8,7 @@ app.use(express.urlencoded({extended : true}));
 app.use(cors());
 app.use(routes);
 
-app.get("/");
-
-const port = process.env.port || 3001;
+const port = process.env.PORT || 3001;
 
 app.listen(port,()=>{
     console.log(`p2etask project running on port ${port}`);

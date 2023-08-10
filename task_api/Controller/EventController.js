@@ -1,25 +1,54 @@
 const express = require("express");
 const app = express();
-const events = require("../model/event");
-const {start,end,slotduration,timezone} = require("../config/constants")
+const slots = require("../model/event");
+const {start,end,slotduration} = require("../config/constants")
 
-app.get("/static",(req,res)=>{
-    var obj = {
-        starthours : start,
-        endhours : end,
-        duration : slotduration,
-        timezone : timezone
+app.post("/bookslot", async (req,res)=>{
+
+    try{
+        
+        let slotstart = new Date(req.body.date);
+        let slotend = new Date(slotstart);
+
+        slotend.setMinutes(slotend.getMinutes() + slotduration);
+
+        let data = {
+            name : req.body.data.name,
+            contact : req.body.data.contact,
+            startDateTime : slotstart,
+            endDateTime : slotend
+        };
+
+        let result = await slots.create(data);
+
+        res.send({success : true,info : result});
     }
-    res.send({success : true,info : obj});
+    catch(error){
+        console.log("*****error*****",error);
+        res.send({success : false,error : error});
+    }
+
 })
 
-app.post("/slots", async(req,res)=>{
+app.post("/slots", async(req,res)=>{ // 
+
     const details = req.body.formdata;
-    const selectedduration = parseInt(details.duration,10); // convert duration to interger since it is converted to string when sent to backend
-    
+    const selectedtimezone = details.timezone;
+
     const selecteddate = new Date(req.body.date); // when using Date object date is converted to UTC -> 5hrs 30min is reduced form IST timezone
-    const hoursToAdd = 5; // we add back 5hrs 30min to make it back to IST
-    const minutesToAdd = 30;
+
+    if(selectedtimezone == "IST"){
+        var hoursToAdd = 5; // we add back 5hrs 30min to make it back to IST
+        var minutesToAdd = 30;
+    }
+    if(selectedtimezone == "UTC"){
+        var hoursToAdd = 0; // we need not add anything since time is UTC
+        var minutesToAdd = 0;
+    }
+    if(selectedtimezone == "CDT"){
+        var hoursToAdd = -5; // we subtract 5hrs to make it CDT
+        var minutesToAdd = 0;
+    }
     selecteddate.setHours(selecteddate.getHours() + hoursToAdd)
     selecteddate.setMinutes(selecteddate.getMinutes() + minutesToAdd)// selected Date is back to the originally selected date by the user.
     
@@ -28,22 +57,24 @@ app.post("/slots", async(req,res)=>{
 
     try{
 
-        const bookedevents = events.find({
+        const bookedevents = await slots.find({
             startDateTime : { $gte : selecteddate , $lt : endselecteddate}
-        }); // retrieve booked slots for the selected date to check overlap
+        }) // retrieve booked slots for the selected date to check overlap.
 
-        if(start.slice(2,3) === "A"){ // to convert the start constant to hours in 24 format
-            startHours = parseInt(start.slice(0,3),10);
+        console.log(bookedevents);
+
+        if(start.endsWith("AM")){ // to convert the start constant to hours in 24 format
+            var startHours = parseInt(start.slice(0,3),10);
         }
         else{
-            startHours = parseInt(start.slice(0,3),10) + 12;
+            var startHours = parseInt(start.slice(0,3),10) + 12;
         }
         
-        if(end.slice(2,3) === "A"){// to convert the end constant to hours in 24 form
-            endHours = parseInt(end.slice(0,3),10);
+        if(end.endsWith("AM")){// to convert the end constant to hours in 24 form
+            var endHours = parseInt(end.slice(0,3),10);
         }
         else{
-            endHours = parseInt(end.slice(0,3),10) + 12;
+            var endHours = parseInt(end.slice(0,3),10) + 12;
         }
 
         const freeslots = []; // array which will contain our free slots
@@ -61,11 +92,14 @@ app.post("/slots", async(req,res)=>{
 
             let isoverlapped = false;
 
-            console.log(slotloopstart);
-            for(const event in bookedevents){
-                if((event.startDateTime >= slotloopstart && event.startDateTime <= slotloopend) || (event.endDateTime >= slotloopstart && event.endDateTime <= slotloopend)){
+            for(var temp of bookedevents){
+                console.log(temp,slotloopstart);
+                if(
+                    (temp.startDateTime >= slotloopstart && temp.startDateTime < slotloopend) ||
+                    (temp.endDateTime > slotloopstart && temp.endDateTime <= slotloopend) ||
+                    (temp.startDateTime <= slotloopstart && temp.endDateTime >= slotloopend)
+                ){
                     isoverlapped = true;
-                    console.log("loop broken");
                     break;
                 }
             }
@@ -75,7 +109,6 @@ app.post("/slots", async(req,res)=>{
             }
 
             tempslot.setMinutes(tempslot.getMinutes() + slotduration);
-            console.log("incremented",tempslot.getHours());
         }
 
         if(tempslot.getMinutes() < minutesToAdd){
@@ -87,7 +120,7 @@ app.post("/slots", async(req,res)=>{
     }
     catch(error){
         console.log("*********error*********",error);
-        res.send({success : false});
+        res.send({success : false,error : error});
     }
 })
 

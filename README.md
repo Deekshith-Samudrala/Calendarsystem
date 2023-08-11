@@ -27,43 +27,43 @@ THis page displays a table with the constants that are configured in the constan
 
 Book Event:
 
-Name and Contact input
-Date picker
-Time zone dropdown
+Name and Contact input, 
+Date picker,
+Time zone dropdown,
 "Show Available Slots" button to fetch and display available slots. Clicking on a slot creates an event.
 (Duration input from the user was not implemented due to lack of time but my logic is ready to handle custom duration input given by user).
 
 Show Events:
 
-Date range picker
+Date range picker,
 Displays all events within the selected date range.
 
 API Endpoints:
 
 Free Slots:
 
-Endpoint: /api/free-slots
+Endpoint: /api/free-slots ::
 Description: Returns an array of available free slots for a given date and time zone.
 (The logic to retrieve booked events is an O(n*n) logic which is not optimal, it can be optimized easily which was not implemented due to time constraint).
 
 Create Event:
 
-Endpoint: /api/bookslot
+Endpoint: /api/bookslot ::
 Description: Creates an event and stores it in the MongoDB document. 
 (The logic to retrieve booked events is also used here which is O(n*n) which can be optimized easily).
 
 Get Events:
 
-Endpoint: /api/slotsinrange
+Endpoint: /api/slotsinrange ::
 Description: Returns all events between the given start and end dates.
 
 Technologies Used:
-Node.js
-Express.js
-MongoDB
-Formik (for forms)
-Yup (for validation)
-React.js (for UI)
+Node.js,
+Express.js,
+MongoDB,
+Formik (for forms),
+Yup (for validation),
+React.js (for UI).
 
 Thank you going throught the Documentation !
 have a good day !

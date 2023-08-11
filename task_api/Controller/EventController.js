@@ -10,6 +10,7 @@ app.post("/bookslot", async (req,res)=>{
         let slotstart = new Date(req.body.date);
         let timezone = req.body.timezone;
 
+        //since i want my database to have times in UTC i offset them based on the timezone selected by the user
         if(timezone === "IST"){
             slotstart.setHours(slotstart.getHours() - 5);
             slotstart.setMinutes(slotstart.getMinutes() - 30);
@@ -21,6 +22,24 @@ app.post("/bookslot", async (req,res)=>{
         let slotend = new Date(slotstart);
         slotend.setMinutes(slotend.getMinutes() + slotduration);
 
+        //iam checking again for overlap on the booked slot
+        let bookedslots = await slots.find({
+            startDateTime : { $gte : slotstart , $lt : slotend }
+        });
+
+        let isoverlapped = false;
+
+        for(var temp of bookedslots){ // To check if theres an overlap of the selected slot.
+            if(
+                (slotstart >= temp.startDateTime && slotend < temp.startDateTime) ||
+                (slotstart > temp.endDateTime &&  slotend <= temp.endDateTime) ||
+                ( slotstart <= temp.startDateTime &&  slotend >= temp.endDateTime)
+            ){
+                isoverlapped = true;
+                break;
+            } 
+        }
+
         let data = {
             name : req.body.data.name,
             contact : req.body.data.contact,
@@ -28,18 +47,21 @@ app.post("/bookslot", async (req,res)=>{
             endDateTime : slotend
         };
 
-        let result = await slots.create(data);
+        if(!isoverlapped){
+            let result = await slots.create(data);
+            res.send({success : true,info : result});
+        }
+        
+        res.send({success : false,error : "The slot is already booked ! Please try again !"});
 
-        res.send({success : true,info : result});
     }
     catch(error){
         console.log("*****error*****",error);
         res.send({success : false,error : error});
     }
-
 })
 
-app.post("/slots", async(req,res)=>{ // 
+app.post("/slots", async(req,res)=>{ 
 
     const details = req.body.formdata;
     const selectedtimezone = details.timezone;
@@ -50,7 +72,7 @@ app.post("/slots", async(req,res)=>{ //
     var minutesToAdd = 30;
     // we reduce 5hrs 30min to make it to UTC since data coming from frontend is intended to be UTC but taken as IST and then converted to UTC when sent to backend
     //we offset this time to make it to UTC again
-     
+
     selecteddate.setHours(selecteddate.getHours() + hoursToAdd)
     selecteddate.setMinutes(selecteddate.getMinutes() + minutesToAdd)// selected Date is back to the originally selected date by the user.
     
@@ -80,18 +102,23 @@ app.post("/slots", async(req,res)=>{ //
         const freeslots = []; // array which will contain our free slots
 
         let tempslot = new Date(selecteddate);
+
         tempslot.setHours(startHours,0,0,0);// temp slot of the date to start our loop from and check for overlap on bookedevent
         tempslot.setHours(tempslot.getHours() + hoursToAdd);// since time is getting converted to UTC have to add 5hrs 30 min
         tempslot.setMinutes(tempslot.getMinutes() + minutesToAdd);// since time is getting converted to UTC have to add 5hrs 30 min
+
         while(tempslot.getHours() < (endHours + hoursToAdd)){
-            
-            const slotloopstart = new Date(tempslot); // loopslotstart for the 
-            const slotloopend = new Date(tempslot);
+            //This while loops over all the possible slots on the selected date.
+
+            const slotloopstart = new Date(tempslot); // looping slot start to check for overlap
+            const slotloopend = new Date(tempslot); // looping slot end to check for overlap
 
             slotloopend.setMinutes(slotloopend.getMinutes() + slotduration);
 
             let isoverlapped = false;
 
+            //this for loop loops on bookedevents array to check for overlap to exclude that slots
+            //before sending the available slots to the user.
             for(var temp of bookedevents){
                 if(
                     (temp.startDateTime >= slotloopstart && temp.startDateTime < slotloopend) ||
@@ -104,7 +131,9 @@ app.post("/slots", async(req,res)=>{ //
             }
 
             if(!isoverlapped){
+                //These if conditions exist to display times according to the time zone selected by the user
                 if(selectedtimezone == "IST"){
+                    // we add 5hrs 30min to convert to IST.
                     slotloopstart.setHours(slotloopstart.getHours() + 5);
                     slotloopstart.setMinutes(slotloopstart.getMinutes() + 30);
                 }
@@ -118,12 +147,16 @@ app.post("/slots", async(req,res)=>{ //
                 freeslots.push(slotloopstart);
             }
 
-            tempslot.setMinutes(tempslot.getMinutes() + slotduration);
+            tempslot.setMinutes(tempslot.getMinutes() + slotduration); 
         }
 
-        if(tempslot.getMinutes() < minutesToAdd){
+        if(tempslot.getMinutes() < minutesToAdd){ 
+            // This is to add the last slot which gets excluded since our loop is 
+            // in hours and our slot duration is 30min so last slot gets excluded.
 
+            //These if conditions exist to display times according to the time zone selected by the user
             if(selectedtimezone == "IST"){
+                // we add 5hrs 30min to convert to IST.
                 tempslot.setHours(tempslot.getHours() + 5);
                 tempslot.setMinutes(tempslot.getMinutes() + 30);
             }
@@ -136,7 +169,10 @@ app.post("/slots", async(req,res)=>{ //
             }
             freeslots.push(tempslot);
         }
-
+        
+        //timezone is also sent because when user books a slot i offset the time to convert it to UTC
+        //before inserting into my database since my database is in UTC format.
+        //i use this "timezoneselected" in my bookslot api.
         res.send({success : true,info : freeslots,timezoneselected : selectedtimezone});
 
     }

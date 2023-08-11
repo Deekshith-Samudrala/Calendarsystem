@@ -4,7 +4,7 @@ This project is a backend implementation of a calendar appointment system using 
 
 Description:
 
-The goal of this project was to build a calendar appointment system backend that integrates with MongoDB to store events and availability slots for Dr. John. Users can view available time slots for booking appointments.
+The goal of this project was to build a calendar appointment backend system that integrates with MongoDB to store events and display availabe slots for Dr. John. Users can view available time slots for booking appointments.
 
 Installation:
 
@@ -15,13 +15,19 @@ Configure static config variables (Start Hours, End Hours, Duration, Time Zone) 
 
 Usage:
 
-Run npm start to start the server.
+Use npm start to run front-end.
+Run node app to start the server.
 
 UI:
 A React.js UI has been implemented for this project with the following pages:
 
+Dashboard:
+
+THis page displays a table with the constants that are configured in the constants file in back-end.
+
 Book Event:
 
+Name and Contact input
 Date picker
 Time zone dropdown
 "Show Available Slots" button to fetch and display available slots. Clicking on a slot creates an event.

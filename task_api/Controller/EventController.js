@@ -8,8 +8,17 @@ app.post("/bookslot", async (req,res)=>{
     try{
         
         let slotstart = new Date(req.body.date);
-        let slotend = new Date(slotstart);
+        let timezone = req.body.timezone;
 
+        if(timezone === "IST"){
+            slotstart.setHours(slotstart.getHours() - 5);
+            slotstart.setMinutes(slotstart.getMinutes() - 30);
+        }
+        if(timezone === "CDT"){
+            slotstart.setHours(slotstart.getHours() + 5);
+        }
+
+        let slotend = new Date(slotstart);
         slotend.setMinutes(slotend.getMinutes() + slotduration);
 
         let data = {
@@ -37,18 +46,11 @@ app.post("/slots", async(req,res)=>{ //
 
     const selecteddate = new Date(req.body.date); // when using Date object date is converted to UTC -> 5hrs 30min is reduced form IST timezone
 
-    if(selectedtimezone == "IST"){
-        var hoursToAdd = 5; // we add back 5hrs 30min to make it back to IST
-        var minutesToAdd = 30;
-    }
-    if(selectedtimezone == "UTC"){
-        var hoursToAdd = 0; // we need not add anything since time is UTC
-        var minutesToAdd = 0;
-    }
-    if(selectedtimezone == "CDT"){
-        var hoursToAdd = -5; // we subtract 5hrs to make it CDT
-        var minutesToAdd = 0;
-    }
+    var hoursToAdd = 5;
+    var minutesToAdd = 30;
+    // we reduce 5hrs 30min to make it to UTC since data coming from frontend is intended to be UTC but taken as IST and then converted to UTC when sent to backend
+    //we offset this time to make it to UTC again
+     
     selecteddate.setHours(selecteddate.getHours() + hoursToAdd)
     selecteddate.setMinutes(selecteddate.getMinutes() + minutesToAdd)// selected Date is back to the originally selected date by the user.
     
@@ -60,8 +62,6 @@ app.post("/slots", async(req,res)=>{ //
         const bookedevents = await slots.find({
             startDateTime : { $gte : selecteddate , $lt : endselecteddate}
         }) // retrieve booked slots for the selected date to check overlap.
-
-        console.log(bookedevents);
 
         if(start.endsWith("AM")){ // to convert the start constant to hours in 24 format
             var startHours = parseInt(start.slice(0,3),10);
@@ -93,7 +93,6 @@ app.post("/slots", async(req,res)=>{ //
             let isoverlapped = false;
 
             for(var temp of bookedevents){
-                console.log(temp,slotloopstart);
                 if(
                     (temp.startDateTime >= slotloopstart && temp.startDateTime < slotloopend) ||
                     (temp.endDateTime > slotloopstart && temp.endDateTime <= slotloopend) ||
@@ -105,6 +104,17 @@ app.post("/slots", async(req,res)=>{ //
             }
 
             if(!isoverlapped){
+                if(selectedtimezone == "IST"){
+                    slotloopstart.setHours(slotloopstart.getHours() + 5);
+                    slotloopstart.setMinutes(slotloopstart.getMinutes() + 30);
+                }
+                if(selectedtimezone == "UTC"){
+                    // we need not add anything since time is UTC
+                }
+                if(selectedtimezone == "CDT"){
+                    slotloopstart.setHours(slotloopstart.getHours() - 5);
+                    // we subtract 5hrs to make it CDT
+                }
                 freeslots.push(slotloopstart);
             }
 
@@ -112,10 +122,22 @@ app.post("/slots", async(req,res)=>{ //
         }
 
         if(tempslot.getMinutes() < minutesToAdd){
+
+            if(selectedtimezone == "IST"){
+                tempslot.setHours(tempslot.getHours() + 5);
+                tempslot.setMinutes(tempslot.getMinutes() + 30);
+            }
+            if(selectedtimezone == "UTC"){
+                // we need not add anything since time is UTC
+            }
+            if(selectedtimezone == "CDT"){
+                tempslot.setHours(tempslot.getHours() - 5);
+                // we subtract 5hrs to make it CDT
+            }
             freeslots.push(tempslot);
         }
 
-        res.send({success : true,info : freeslots});
+        res.send({success : true,info : freeslots,timezoneselected : selectedtimezone});
 
     }
     catch(error){

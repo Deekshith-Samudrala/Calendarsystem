@@ -17,6 +17,7 @@ const Bookevent = () => {
    let [availableslotsarr,setAvailableslotsarr] = useState([]);
    let [dispdate,setDispdate] = useState();
    let [userdata,setUserdata] = useState();
+   let [selectedtimezone,setSelectedtimezone] = useState("");
 
    const disabledbeforedate = new Date(2023,7,3);
    const disabledafterdate = new Date(2023,9,3);
@@ -50,9 +51,10 @@ const Bookevent = () => {
                setFormsubmiterr("There are no available slots on this date !");
             }
             else{
+            setSelectedtimezone(result.timezoneselected); // coming from the backend to offset when user books a slot
             setAvailableslotsarr(result.info);
             setDispdate(result.info[0])
-            console.log(result.info);
+            console.log(result);
          }
          }
          else{
@@ -72,7 +74,8 @@ const Bookevent = () => {
       let bookslot = async (e)=>{
          let obj = {
             data : userdata,
-            date : e.target.value
+            date : e.target.value,
+            timezone : selectedtimezone
          }
          
          let result = await slotservice.bookaslot(obj);

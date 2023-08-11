@@ -7,7 +7,12 @@ const bookaslot = async (data)=>{
 }
 
 const availableslots = async (data)=>{
-    let result = await axios.post(`${api}/event/slots`,data);
+    let result = await axios.post(`${api}/event/freeslots`,data);
     return result.data;
 }
-export default { bookaslot, availableslots };
+
+const bookedslotsinrange = async(startdate,enddate)=>{
+    let result = await axios.get(`${api}/event/slotsinrange/${startdate}/${enddate}`);
+    return result.data;
+}
+export default { bookaslot, availableslots, bookedslotsinrange };

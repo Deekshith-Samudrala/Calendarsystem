@@ -10,7 +10,7 @@ const Bookevent = () => {
 
    let navigate = useNavigate();
 
-   let [selecteddate,setSelecteddate] = useState("");
+   let [selecteddate,setSelecteddate] = useState(""); 
    let [dateerr,setDateerr] = useState(true);
    let [formsubmit,setFormsubmit] = useState(false);
    let [formsubmiterr,setFormsubmiterr] = useState("Please submit the form to check available slots")
@@ -19,6 +19,7 @@ const Bookevent = () => {
    let [userdata,setUserdata] = useState();
    let [selectedtimezone,setSelectedtimezone] = useState("");
 
+   //enabling only a range of dates for the user to book slot from.
    const disabledbeforedate = new Date(2023,7,3);
    const disabledafterdate = new Date(2023,9,3);
 
@@ -43,7 +44,6 @@ const Bookevent = () => {
          setUserdata(formdata);
          selecteddate.setHours(0,0,0,0);// to make hours minutes seconds and milliseconds to zero.
          let obj = {formdata : formdata,date : selecteddate.toLocaleDateString('en-us')};
-         console.log(obj);
          let result = await slotservice.availableslots(obj);
          if(result.success){
             if(result.info.length === 0){
@@ -54,7 +54,6 @@ const Bookevent = () => {
             setSelectedtimezone(result.timezoneselected); // coming from the backend to offset when user books a slot
             setAvailableslotsarr(result.info);
             setDispdate(result.info[0])
-            console.log(result);
          }
          }
          else{

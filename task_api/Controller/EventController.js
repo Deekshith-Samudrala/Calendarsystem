@@ -51,17 +51,18 @@ app.post("/bookslot", async (req,res)=>{
             let result = await slots.create(data);
             res.send({success : true,info : result});
         }
-        
+        else{
         res.send({success : false,error : "The slot is already booked ! Please try again !"});
+        }
 
     }
     catch(error){
         console.log("*****error*****",error);
-        res.send({success : false,error : error});
+        return res.send({success : false,error : error});
     }
 })
 
-app.post("/slots", async(req,res)=>{ 
+app.post("/freeslots", async(req,res)=>{ 
 
     const details = req.body.formdata;
     const selectedtimezone = details.timezone;
@@ -180,6 +181,24 @@ app.post("/slots", async(req,res)=>{
         console.log("*********error*********",error);
         res.send({success : false,error : error});
     }
+})
+
+app.get("/slotsinrange/:startdate/:enddate",async (req,res)=>{
+
+    try{
+        startdate = req.params.startdate;
+        enddate = req.params.enddate; 
+
+        const bookedslotsinrange = await slots.find({
+            startDateTime : { $gte : startdate , $lt : enddate}
+        }) // retrieve booked slots for the selected date to check overlap.
+        console.log(bookedslotsinrange);
+        res.send({success : true,info : bookedslotsinrange});
+    }
+    catch(error){
+        console.log(error);
+        res.send({success : false,error :error});
+    }   
 })
 
 module.exports = app;

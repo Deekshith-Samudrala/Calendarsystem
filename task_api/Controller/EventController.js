@@ -1,7 +1,24 @@
 const express = require("express");
 const app = express();
 const slots = require("../model/event");
-const {start,end,slotduration} = require("../config/constants")
+const {start,end,slotduration,timezone} = require("../config/constants")
+
+app.get("/getconstants",(req,res)=>{
+
+    try{
+        let obj = {
+            start : start,
+            end : end,
+            slotduration : slotduration,
+            timezone : timezone
+        }
+
+        res.send({success : true,info : obj})
+    }
+    catch(error){
+        res.send({success : false,error : error});
+    }
+})
 
 app.post("/bookslot", async (req,res)=>{
 

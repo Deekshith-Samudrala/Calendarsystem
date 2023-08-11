@@ -52,9 +52,12 @@ const Showevents = () => {
                   </span>
                </div>
                <div className='row text-center'>
-                  <div className='col-md-6 offset-md-3'>
-                     <button className='btn btn-info my-5' onClick={getslotsinrange}>Get Slots</button>
+                  <div className='col-md-6 offset-md-3 mt-5'>
+                     <button className='btn btn-info' onClick={getslotsinrange}>Get Slots</button>
                   </div>
+               </div>
+               <div className='text-center mb-5 mt-2'>
+                  <label className='text-center'><i>Time is shown in UTC format</i></label>
                </div>
                <div className='row'>
                   <div className='col-md-8 offset-md-2'>

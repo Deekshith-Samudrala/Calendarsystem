@@ -5,8 +5,8 @@ const Dashboard = () => {
 
     let [details,setDetails] = useState([]);
 
-    useEffect(()=>{
-        let getdeets = async()=>{
+    useEffect(()=>{ 
+        let getdeets = async()=>{ //detail of the constants set in constants file in backend
             let result = await slotservice.getconstantsdetails();
             if(result.success){
                 console.log(result);

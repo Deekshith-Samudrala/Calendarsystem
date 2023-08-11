@@ -4,7 +4,7 @@ const slots = require("../model/event");
 const {start,end,slotduration,timezone} = require("../config/constants")
 
 app.get("/getconstants",(req,res)=>{
-
+    // this api is to get the constant details set in constans file to display on dashboard 
     try{
         let obj = {
             start : start,

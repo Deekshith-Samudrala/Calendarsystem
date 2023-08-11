@@ -8,6 +8,9 @@ const Showevents = () => {
    let [selectedenddate,setSelectedenddate] = useState("");
    let [slotsinrangearr,setSlotsinrangearr] = useState([]);
 
+   //initially only start date picker is enabled after the start date is picked 
+   //end date picker is enabled.
+
    //enabling only a range of dates for the user to select start date from.
    const disabledbeforestartdate = new Date(2023,7,3);
    const disabledafterstartdate = new Date(2023,9,3);

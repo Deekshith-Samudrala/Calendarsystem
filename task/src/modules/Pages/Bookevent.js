@@ -33,6 +33,7 @@ const Bookevent = () => {
       timezone : yup.string().required("Select a time zone")
    })
 
+   //used formik for forms and implemented validation using yup.
    let {handleChange,touched,handleSubmit,errors} = useFormik({
       initialValues : {
          name : "",
@@ -136,7 +137,7 @@ const Bookevent = () => {
                                     <DatePicker className="form-control" dateFormat="yyyy/MM/dd" onChange={date=>datechange(date)} selected={selecteddate} filterDate={isvaliddate}></DatePicker>
                                  </div>
                               </div>
-                              <button type="submit" className='btn btn-primary' disabled={dateerr}>Show availale slots</button>
+                              <button type="submit" className='btn btn-primary' disabled={dateerr}>Show available slots</button>
                            </div>
                         </div>
                      </form>
